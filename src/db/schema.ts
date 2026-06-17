@@ -9,6 +9,7 @@ import {
 
 export const endpoints = pgTable("endpoints", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  user_id: varchar({ length: 255 }),
   name: varchar({ length: 255 }).notNull(),
   url: varchar({ length: 255 }).notNull(),
   method: varchar({ length: 100 }).notNull(),

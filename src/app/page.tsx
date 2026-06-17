@@ -13,9 +13,12 @@ import { AutoRefresh } from "../components/AutoRefresh";
 import { getStatusUI } from "../static/status";
 import UptimeStat from "../components/UptimeStat";
 import { getDashboardData } from "@/lib/queries";
+import { auth } from "@clerk/nextjs/server";
 
 export default async function Dashboard() {
-  const data = await getDashboardData();
+  const { userId } = await auth();
+  if (!userId) return null;
+  const data = await getDashboardData(userId);
 
   const {
     allEndpoints,

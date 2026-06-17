@@ -1,8 +1,13 @@
 import { db } from "../src";
 import { checks, endpoints } from "@/src/db/schema";
-import { desc, sql, gt } from "drizzle-orm";
+import { desc, sql, gt, eq, and, inArray } from "drizzle-orm";
 
-export async function getDashboardData() {
+export async function getDashboardData(userId: string) {
+  const ownedEndpointIds = db
+    .select({ id: endpoints.id })
+    .from(endpoints)
+    .where(eq(endpoints.user_id, userId));
+
   const [
     allEndpoints,
     latestCheckResults,
@@ -12,7 +17,7 @@ export async function getDashboardData() {
     avgs,
     history,
   ] = await Promise.all([
-    db.select().from(endpoints),
+    db.select().from(endpoints).where(eq(endpoints.user_id, userId)),
     db
       .selectDistinctOn([checks.endpoint_id], {
         id: checks.endpoint_id,
@@ -20,6 +25,7 @@ export async function getDashboardData() {
         statusCode: checks.status_code,
       })
       .from(checks)
+      .where(inArray(checks.endpoint_id, ownedEndpointIds))
       .orderBy(checks.endpoint_id, desc(checks.timestamp)),
 
     // Uptime % Calculations
@@ -31,7 +37,12 @@ export async function getDashboardData() {
         ),
       })
       .from(checks)
-      .where(gt(checks.timestamp, sql`now() - interval '24 hours'`))
+      .where(
+        and(
+          gt(checks.timestamp, sql`now() - interval '24 hours'`),
+          inArray(checks.endpoint_id, ownedEndpointIds),
+        ),
+      )
       .groupBy(checks.endpoint_id),
     db
       .select({
@@ -41,7 +52,12 @@ export async function getDashboardData() {
         ),
       })
       .from(checks)
-      .where(gt(checks.timestamp, sql`now() - interval '7 days'`))
+      .where(
+        and(
+          gt(checks.timestamp, sql`now() - interval '7 days'`),
+          inArray(checks.endpoint_id, ownedEndpointIds),
+        ),
+      )
       .groupBy(checks.endpoint_id),
     db
       .select({
@@ -51,7 +67,12 @@ export async function getDashboardData() {
         ),
       })
       .from(checks)
-      .where(gt(checks.timestamp, sql`now() - interval '30 days'`))
+      .where(
+        and(
+          gt(checks.timestamp, sql`now() - interval '30 days'`),
+          inArray(checks.endpoint_id, ownedEndpointIds),
+        ),
+      )
       .groupBy(checks.endpoint_id),
 
     // Average Latency
@@ -63,7 +84,12 @@ export async function getDashboardData() {
         ),
       })
       .from(checks)
-      .where(gt(checks.timestamp, sql`now() - interval '24 hours'`))
+      .where(
+        and(
+          gt(checks.timestamp, sql`now() - interval '24 hours'`),
+          inArray(checks.endpoint_id, ownedEndpointIds),
+        ),
+      )
       .groupBy(checks.endpoint_id),
 
     // Sparkline history
@@ -75,7 +101,12 @@ export async function getDashboardData() {
         status: checks.status_code,
       })
       .from(checks)
-      .where(gt(checks.timestamp, sql`now() - interval '24 hours'`))
+      .where(
+        and(
+          gt(checks.timestamp, sql`now() - interval '24 hours'`),
+          inArray(checks.endpoint_id, ownedEndpointIds),
+        ),
+      )
       .orderBy(checks.timestamp),
   ]);
 

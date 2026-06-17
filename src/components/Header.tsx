@@ -17,6 +17,7 @@ import {
 import { Menu } from "lucide-react";
 import { useState } from "react";
 import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
+import { Show, SignInButton, UserButton } from "@clerk/nextjs";
 
 export function Header() {
   const [isOpen, setIsOpen] = useState(false);
@@ -54,9 +55,18 @@ export function Header() {
         </NavigationMenu>
 
         <div className="flex items-center gap-4">
-          <Button variant="default" className="hidden md:flex rounded-md">
-            Login
-          </Button>
+          <div className="hidden md:flex">
+            <Show when="signed-in">
+              <UserButton />
+            </Show>
+            <Show when="signed-out">
+              <SignInButton mode="modal">
+                <Button variant="default" className="rounded-md">
+                  Login
+                </Button>
+              </SignInButton>
+            </Show>
+          </div>
 
           <div className="md:hidden">
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -89,9 +99,24 @@ export function Header() {
                     </a>
                   ))}
                   <hr className="my-2 mr-6" />
-                  <Button className="w-[90%]" onClick={() => setIsOpen(false)}>
-                    Login
-                  </Button>
+                  <Show when="signed-in">
+                    <div className="flex items-center gap-3">
+                      <UserButton />
+                      <span className="text-sm text-muted-foreground">
+                        Account
+                      </span>
+                    </div>
+                  </Show>
+                  <Show when="signed-out">
+                    <SignInButton mode="modal">
+                      <Button
+                        className="w-[90%]"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        Login
+                      </Button>
+                    </SignInButton>
+                  </Show>
                 </div>
               </SheetContent>
             </Sheet>
