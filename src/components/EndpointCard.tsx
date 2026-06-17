@@ -15,6 +15,7 @@ import {
   AlertDialogTrigger,
 } from "@/src/components/ui/alert-dialog";
 import { Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 type SelectEndpoint = typeof endpoints.$inferSelect;
 
@@ -31,8 +32,19 @@ export function EndpointCard({
   };
 
   const handleDelete = async (id: number) => {
-    await fetch(`/api/endpoints/${id}`, { method: "DELETE" });
-    onDelete();
+    try {
+      await fetch(`/api/endpoints/${id}`, { method: "DELETE" });
+      onDelete();
+      toast.success("Deleted", {
+        description: "Endpoint successfully deleted",
+      });
+    } catch {
+      await fetch(`/api/endpoints/${id}`, { method: "DELETE" });
+      onDelete();
+      toast.error("Error", {
+        description: "Something went wrong while deleting Endpoint",
+      });
+    }
   };
 
   return (

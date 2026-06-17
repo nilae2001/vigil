@@ -4,6 +4,7 @@ import {
   varchar,
   boolean,
   timestamp,
+  index,
 } from "drizzle-orm/pg-core";
 
 export const endpoints = pgTable("endpoints", {
@@ -17,23 +18,33 @@ export const endpoints = pgTable("endpoints", {
   created_at: timestamp().defaultNow(),
 });
 
-export const checks = pgTable("checks", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  endpoint_id: integer()
-    .notNull()
-    .references(() => endpoints.id),
-  timestamp: timestamp().defaultNow(),
-  status_code: integer(),
-  response_time: integer(),
-  is_up: boolean().notNull(),
-  error_message: varchar({ length: 255 }),
-});
+export const checks = pgTable(
+  "checks",
+  {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    endpoint_id: integer()
+      .notNull()
+      .references(() => endpoints.id, { onDelete: "cascade" }),
+    timestamp: timestamp().defaultNow(),
+    status_code: integer(),
+    response_time: integer(),
+    is_up: boolean().notNull(),
+    error_message: varchar({ length: 255 }),
+  },
+  (table) => [
+    index("checks_endpoint_id_timestamp_idx").on(
+      table.endpoint_id,
+      table.timestamp,
+    ),
+    index("checks_endpoint_id_idx").on(table.endpoint_id),
+  ],
+);
 
 export const incidents = pgTable("incidents", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   endpoint_id: integer()
     .notNull()
-    .references(() => endpoints.id),
+    .references(() => endpoints.id, { onDelete: "cascade" }),
   started_at: timestamp().defaultNow(),
   resolved_at: timestamp(),
   duration: integer(),

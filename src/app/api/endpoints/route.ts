@@ -3,6 +3,7 @@ import { createSelectSchema, createInsertSchema } from "drizzle-orm/zod";
 import { endpoints } from "../../../db/schema";
 import { NextResponse } from "next/server";
 import { db } from "@/src";
+import { endpointQueue } from "@/lib/queue";
 
 type SelectEndpoint = typeof endpoints.$inferSelect;
 type InserEndpoint = typeof endpoints.$inferInsert;
@@ -31,7 +32,21 @@ export async function POST(request: Request) {
     };
     const endpointInsertSchema = createInsertSchema(endpoints);
     const parsed: InserEndpoint = endpointInsertSchema.parse(endpoint);
-    await db.insert(endpoints).values(parsed);
+    const [addedEndpoint] = await db
+      .insert(endpoints)
+      .values(parsed)
+      .returning();
+    await endpointQueue.add(
+      `check-${addedEndpoint.id}`,
+      {
+        endpointId: addedEndpoint.id,
+      },
+      {
+        repeat: {
+          every: addedEndpoint.interval_seconds * 1000,
+        },
+      },
+    );
     return NextResponse.json(
       { message: "Endpoint added successfully" },
       { status: 201 },

@@ -8,6 +8,7 @@ import { Label } from "@/src/components/ui/label";
 import { useEffect, useState } from "react";
 import { endpoints } from "@/src/db/schema";
 import EndpointList from "@/src/components/EndpointList";
+import { toast } from "sonner";
 
 export default function AddEndpointForm() {
   type SelectEndpoint = typeof endpoints.$inferSelect;
@@ -17,16 +18,34 @@ export default function AddEndpointForm() {
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm<EndpointFormData>();
 
   const onSubmit = async (data: EndpointFormData) => {
-    await fetch("/api/endpoints", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    await getAllEndpoints();
+    try {
+      const response = await fetch("/api/endpoints", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      if (response.ok) {
+        toast.success("Success", {
+          description: "Endpoint added successfully",
+        });
+
+        reset();
+
+        await getAllEndpoints();
+      } else {
+        throw new Error("Failed to save");
+      }
+    } catch (error) {
+      toast.error("Error", {
+        description: "Something went wrong while adding Endpoing",
+      });
+    }
   };
 
   const getAllEndpoints = async () => {
