@@ -33,16 +33,17 @@ export function EndpointCard({
 
   const handleDelete = async (id: number) => {
     try {
-      await fetch(`/api/endpoints/${id}`, { method: "DELETE" });
+      const response = await fetch(`/api/endpoints/${id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error("Failed to delete");
       onDelete();
       toast.success("Deleted", {
         description: "Endpoint successfully deleted",
       });
     } catch {
-      await fetch(`/api/endpoints/${id}`, { method: "DELETE" });
-      onDelete();
       toast.error("Error", {
-        description: "Something went wrong while deleting Endpoint",
+        description: "Something went wrong while deleting endpoint",
       });
     }
   };

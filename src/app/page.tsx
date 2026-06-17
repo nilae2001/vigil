@@ -58,6 +58,15 @@ export default async function Dashboard() {
         </div>
       </div>
 
+      {allEndpoints.length === 0 ? (
+        <div className="text-center py-16 text-sm text-muted-foreground">
+          No endpoints yet —{" "}
+          <a href="/endpoints" className="underline font-medium">
+            add one
+          </a>{" "}
+          to start monitoring.
+        </div>
+      ) : (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {allEndpoints.map((ep) => {
           const last = latestCheckResults.find((l) => l.id === ep.id);
@@ -130,6 +139,7 @@ export default async function Dashboard() {
           );
         })}
       </div>
+      )}
     </div>
   );
 }

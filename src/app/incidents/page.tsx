@@ -12,6 +12,7 @@ import { Badge } from "@/src/components/ui/badge";
 import { formatDistanceToNow, format, differenceInMinutes } from "date-fns";
 import { useState, useEffect } from "react";
 import { incidents, endpoints } from "@/src/db/schema";
+import { toast } from "sonner";
 
 type SelectIncident = typeof incidents.$inferSelect;
 type SelectEndpoint = typeof endpoints.$inferSelect;
@@ -25,6 +26,7 @@ export const dynamic = "force-dynamic";
 
 export default function IncidentsPage() {
   const [history, setHistory] = useState<IncidentWithEndpoint[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const getAllIncidents = async () => {
@@ -33,6 +35,10 @@ export default function IncidentsPage() {
           fetch("/api/incidents"),
           fetch("/api/endpoints"),
         ]);
+
+        if (!incidentsRes.ok || !endpointsRes.ok) {
+          throw new Error("Failed to fetch");
+        }
 
         const incidentsData: SelectIncident[] = await incidentsRes.json();
         const endpointsData: SelectEndpoint[] = await endpointsRes.json();
@@ -51,6 +57,11 @@ export default function IncidentsPage() {
         setHistory(merged);
       } catch (error) {
         console.error("Error fetching incidents: ", error);
+        toast.error("Error", {
+          description: "Failed to load incident history",
+        });
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -90,7 +101,16 @@ export default function IncidentsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {history.length === 0 ? (
+            {isLoading ? (
+              <TableRow>
+                <TableCell
+                  colSpan={5}
+                  className="h-32 text-center text-zinc-400"
+                >
+                  Loading incidents…
+                </TableCell>
+              </TableRow>
+            ) : history.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={5}

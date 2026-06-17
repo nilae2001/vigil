@@ -14,6 +14,7 @@ export default function AddEndpointForm() {
   type SelectEndpoint = typeof endpoints.$inferSelect;
 
   const [allEndpoints, setAllEndpoints] = useState<SelectEndpoint[] | null>();
+  const [isLoading, setIsLoading] = useState(true);
 
   const {
     register,
@@ -49,13 +50,21 @@ export default function AddEndpointForm() {
   };
 
   const getAllEndpoints = async () => {
-    const response = await fetch("/api/endpoints", {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-    });
-    if (!response.ok) return;
-    const data: SelectEndpoint[] = await response.json();
-    setAllEndpoints(data);
+    try {
+      const response = await fetch("/api/endpoints", {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!response.ok) throw new Error("Failed to fetch");
+      const data: SelectEndpoint[] = await response.json();
+      setAllEndpoints(data);
+    } catch {
+      toast.error("Error", {
+        description: "Failed to load endpoints",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -207,7 +216,11 @@ export default function AddEndpointForm() {
           </Button>
         </form>
       </div>
-      <EndpointList allEndpoints={allEndpoints} onDelete={getAllEndpoints} />
+      <EndpointList
+        allEndpoints={allEndpoints}
+        isLoading={isLoading}
+        onDelete={getAllEndpoints}
+      />
     </div>
   );
 }
